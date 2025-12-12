@@ -149,31 +149,48 @@ document.addEventListener('DOMContentLoaded', function() {
         let playlistHTML = '';
         
         filteredSongs.forEach((song, listIndex) => {
-            // 获取原始索引
-            const originalIndex = song.index;
-            const isActive = originalIndex === currentSongIndex;
-            
-            // 获取歌曲文件扩展名
-            const fileExt = song.song_file.split('.').pop().toLowerCase();
-            const isAudioFile = ['mp3', 'wav', 'ogg', 'm4a'].includes(fileExt);
-            
-            playlistHTML += `
-                <div class="playlist-item ${isActive ? 'active' : ''}" data-index="${originalIndex}" data-list-index="${listIndex}">
-                    <div class="playlist-item-playing">
-                        <i class="fas fa-play"></i>
-                    </div>
-                    <img src="${song.cover_file ? 'covers/' + song.cover_file : 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'}" 
-                         alt="${song.song_name}" 
-                         onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'">
-                    <div class="playlist-item-info">
-                        <div class="playlist-item-title">${highlightSearchTerm(song.song_name)}</div>
-                        <div class="playlist-item-artist">${highlightSearchTerm(song.song_author)}</div>
-                    </div>
-                    <div class="playlist-item-duration">${formatTime(song.duration)}</div>
-                    ${!isAudioFile ? '<span class="unsupported-format">格式不支持</span>' : ''}
+        // 获取原始索引
+        const originalIndex = song.index;
+        const isActive = originalIndex === currentSongIndex;
+        
+        // 获取歌曲文件扩展名（支持大小写）
+        const fileExt = song.song_file ? song.song_file.split('.').pop().toLowerCase() : '';
+        const supportedFormats = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
+        const isAudioFile = supportedFormats.includes(fileExt);
+        
+        // 检查具体是什么格式（用于显示）
+        const originalExt = song.song_file ? song.song_file.split('.').pop() : '';
+        const isMp3 = fileExt === 'mp3';
+        const isWav = fileExt === 'wav';
+        const isMp3UpperCase = originalExt === 'MP3';
+        const isWavUpperCase = originalExt === 'WAV';
+        
+        // 格式提示文本
+        let formatHint = '';
+        if (!isAudioFile && song.song_file) {
+            formatHint = '<span class="unsupported-format">格式不支持</span>';
+        } else if (isMp3UpperCase || isWavUpperCase) {
+            // 如果是大写的MP3或WAV，显示提示
+            formatHint = `<span class="uppercase-format">${originalExt}</span>`;
+        }
+        
+        playlistHTML += `
+            <div class="playlist-item ${isActive ? 'active' : ''}" data-index="${originalIndex}" data-list-index="${listIndex}">
+                <div class="playlist-item-playing">
+                    <i class="fas fa-play"></i>
                 </div>
-            `;
-        });
+                <img src="${song.cover_file ? 'covers/' + song.cover_file : 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'}" 
+                     alt="${song.song_name || '未知歌曲'}" 
+                     onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'">
+                <div class="playlist-item-info">
+                    <div class="playlist-item-title">${highlightSearchTerm(song.song_name || '未知歌曲')}</div>
+                    <div class="playlist-item-artist">${highlightSearchTerm(song.song_author || '未知歌手')}</div>
+                </div>
+                <div class="playlist-item-duration">${formatTime(song.duration)}</div>
+                ${formatHint}
+            </div>
+        `;
+    });
         
         elements.playlist.innerHTML = playlistHTML;
         
