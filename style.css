@@ -713,3 +713,38 @@ footer {
         margin-right: 12px;
     }
 }
+
+/* 搜索高亮 */
+.highlight {
+    background-color: rgba(106, 17, 203, 0.3);
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* 不支持的格式提示 */
+.unsupported-format {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    margin-left: 10px;
+    padding: 2px 6px;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 4px;
+}
+
+/* 歌词滚动条优化 */
+.lyrics-display::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%);
+}
+
+/* 播放列表项播放图标动画 */
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+.playlist-item.active .playlist-item-playing i {
+    animation: pulse 1.5s infinite;
+}
