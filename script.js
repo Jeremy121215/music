@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let scrollLyrics = [];
     let searchQuery = '';
     
+    // 歌词滚动控制变量
+    let userScrolledLyrics = false;
+    let lyricsScrollTimer = null;
+    const LYRIC_AUTO_SCROLL_DELAY = 5000; // 5秒后恢复自动滚动
+    
     // DOM 元素引用
     let elements = {};
     
@@ -368,6 +373,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+        
+        // 歌词容器滚动监听
+        if (elements.lyricsDisplay) {
+            elements.lyricsDisplay.addEventListener('wheel', handleLyricsUserScroll);
+            elements.lyricsDisplay.addEventListener('touchmove', handleLyricsUserScroll);
+            elements.lyricsDisplay.addEventListener('scroll', handleLyricsUserScroll);
+        }
+    }
+    
+    // 处理用户滚动歌词
+    function handleLyricsUserScroll() {
+        // 标记用户正在手动滚动
+        userScrolledLyrics = true;
+        
+        // 清除之前的定时器
+        if (lyricsScrollTimer) {
+            clearTimeout(lyricsScrollTimer);
+        }
+        
+        // 设置5秒后恢复自动滚动
+        lyricsScrollTimer = setTimeout(() => {
+            userScrolledLyrics = false;
+            // 恢复自动滚动到当前歌词
+            const currentTime = audioPlayer.currentTime;
+            const lyricLines = document.querySelectorAll('.lyric-line');
+            const song = songs[currentSongIndex];
+            
+            if (song && song.has_scroll_lyric && scrollLyrics.length > 0) {
+                let activeIndex = -1;
+                for (let i = scrollLyrics.length - 1; i >= 0; i--) {
+                    if (currentTime >= scrollLyrics[i].time) {
+                        activeIndex = i;
+                        break;
+                    }
+                }
+                
+                if (activeIndex >= 0 && activeIndex < lyricLines.length) {
+                    scrollToLyricLine(lyricLines[activeIndex]);
+                }
+            }
+        }, LYRIC_AUTO_SCROLL_DELAY);
+    }
+    
+    // 滚动到指定歌词行（使其位于歌词框中央）
+    function scrollToLyricLine(lineElement) {
+        if (!lineElement || !elements.lyricsDisplay) return;
+        
+        const container = elements.lyricsDisplay;
+        const lineTop = lineElement.offsetTop;
+        const lineHeight = lineElement.offsetHeight;
+        const containerHeight = container.clientHeight;
+        
+        // 计算目标滚动位置，使歌词行位于容器中央
+        const targetScrollTop = lineTop - (containerHeight / 2) + (lineHeight / 2);
+        
+        // 限制滚动范围（避免滚动过头）
+        const maxScrollTop = container.scrollHeight - containerHeight;
+        const safeScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+        
+        // 平滑滚动到目标位置
+        container.scrollTo({
+            top: safeScrollTop,
+            behavior: 'smooth'
+        });
     }
     
     // 加载指定索引的歌曲
@@ -376,6 +445,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const song = songs[index];
         currentSongIndex = index;
+        
+        // 重置歌词滚动状态
+        userScrolledLyrics = false;
+        if (lyricsScrollTimer) {
+            clearTimeout(lyricsScrollTimer);
+            lyricsScrollTimer = null;
+        }
         
         // 更新UI
         if (elements.songTitle) elements.songTitle.textContent = song.song_name;
@@ -593,8 +669,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const lyrics = song.song_lyric;
         let lyricsHTML = '';
         
-        // 添加顶部占位行
-        lyricsHTML += '<div class="lyric-spacer"></div>';
+        // 添加顶部占位行（用于确保第一行歌词可以滚动到中央）
+        lyricsHTML += '<div class="lyric-spacer large-spacer"></div>';
         
         if (song.has_scroll_lyric) {
             const lines = lyrics.split('\n');
@@ -650,8 +726,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // 添加底部占位行
-        lyricsHTML += '<div class="lyric-spacer"></div>';
+        // 添加底部占位行（用于确保最后一行歌词可以滚动到中央）
+        lyricsHTML += '<div class="lyric-spacer large-spacer"></div>';
         
         elements.lyricsDisplay.innerHTML = lyricsHTML;
         
@@ -700,38 +776,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         activeLine.classList.add('active');
         
-        // 获取歌词容器和当前行位置
-        const container = elements.lyricsDisplay;
-        if (!container) return;
-        
-        const lineTop = activeLine.offsetTop;
-        const lineHeight = activeLine.offsetHeight;
-        const containerHeight = container.clientHeight;
-        const containerScrollTop = container.scrollTop;
-        
-        // 计算当前行在容器中的位置
-        const lineBottom = lineTop + lineHeight;
-        const viewportTop = containerScrollTop;
-        const viewportBottom = containerScrollTop + containerHeight;
-        
-        // 检查当前行是否在可视区域内
-        const isInView = (lineTop >= viewportTop && lineTop <= viewportBottom) || 
-                         (lineBottom >= viewportTop && lineBottom <= viewportBottom);
-        
-        // 只有当歌词行不在可视区域内时才滚动
-        if (!isInView) {
-            // 计算滚动位置：让当前行显示在容器中间偏上的位置（1/3处）
-            const targetScrollTop = lineTop - (containerHeight / 3);
-            
-            // 限制滚动范围
-            const maxScrollTop = container.scrollHeight - containerHeight;
-            const safeScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
-            
-            // 使用平滑滚动
-            container.scrollTo({
-                top: safeScrollTop,
-                behavior: 'smooth'
-            });
+        // 如果用户没有手动滚动，则自动滚动到当前歌词行
+        if (!userScrolledLyrics) {
+            scrollToLyricLine(activeLine);
         }
     }
     
