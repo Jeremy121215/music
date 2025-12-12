@@ -3,10 +3,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 全局变量
     const audioPlayer = new Audio();
     let songs = [];
+    let filteredSongs = [];
     let currentSongIndex = 0;
     let currentMode = 'order'; // 播放模式: order, random, single
     let isPlaying = false;
     let scrollLyrics = [];
+    let searchQuery = '';
     
     // DOM 元素
     const elements = {
@@ -35,7 +37,9 @@ document.addEventListener('DOMContentLoaded', function() {
             random: document.getElementById('random-mode'),
             single: document.getElementById('single-mode')
         },
-        shufflePlaylistBtn: document.getElementById('shuffle-playlist')
+        shufflePlaylistBtn: document.getElementById('shuffle-playlist'),
+        searchInput: document.getElementById('search-input'),
+        clearSearchBtn: document.getElementById('clear-search')
     };
     
     // 初始化应用
@@ -93,8 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 duration: 0 // 将在加载音频后设置
             }));
             
+            filteredSongs = [...songs];
+            
             // 更新歌曲计数
-            elements.songCount.textContent = `(${songs.length} 首)`;
+            updateSongCount();
             
             // 渲染播放列表
             renderPlaylist();
@@ -105,14 +111,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 更新歌曲计数
+    function updateSongCount() {
+        elements.songCount.textContent = `(${filteredSongs.length} 首)`;
+    }
+    
+    // 搜索歌曲
+    function searchSongs(query) {
+        searchQuery = query.toLowerCase().trim();
+        
+        if (searchQuery === '') {
+            filteredSongs = [...songs];
+        } else {
+            filteredSongs = songs.filter(song => {
+                return song.song_name.toLowerCase().includes(searchQuery) ||
+                       song.song_author.toLowerCase().includes(searchQuery);
+            });
+        }
+        
+        updateSongCount();
+        renderPlaylist();
+    }
+    
     // 渲染播放列表
     function renderPlaylist() {
-        if (songs.length === 0) {
+        if (filteredSongs.length === 0) {
             elements.playlist.innerHTML = `
                 <div class="playlist-empty">
-                    <i class="fas fa-music"></i>
-                    <p>播放列表为空</p>
-                    <p>请检查 songs-list.json 文件</p>
+                    <i class="fas fa-search"></i>
+                    <p>${searchQuery ? '未找到匹配的歌曲' : '播放列表为空'}</p>
+                    <p>${searchQuery ? '请尝试其他搜索词' : '请检查 songs-list.json 文件'}</p>
                 </div>
             `;
             return;
@@ -120,22 +148,29 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let playlistHTML = '';
         
-        songs.forEach((song, index) => {
+        filteredSongs.forEach((song, listIndex) => {
+            // 获取原始索引
+            const originalIndex = song.index;
+            const isActive = originalIndex === currentSongIndex;
+            
             // 获取歌曲文件扩展名
             const fileExt = song.song_file.split('.').pop().toLowerCase();
             const isAudioFile = ['mp3', 'wav', 'ogg', 'm4a'].includes(fileExt);
             
             playlistHTML += `
-                <div class="playlist-item ${index === currentSongIndex ? 'active' : ''}" data-index="${index}">
+                <div class="playlist-item ${isActive ? 'active' : ''}" data-index="${originalIndex}" data-list-index="${listIndex}">
+                    <div class="playlist-item-playing">
+                        <i class="fas fa-play"></i>
+                    </div>
                     <img src="${song.cover_file ? 'covers/' + song.cover_file : 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'}" 
                          alt="${song.song_name}" 
                          onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'">
                     <div class="playlist-item-info">
-                        <div class="playlist-item-title">${song.song_name || '未知歌曲'}</div>
-                        <div class="playlist-item-artist">${song.song_author || '未知歌手'}</div>
+                        <div class="playlist-item-title">${highlightSearchTerm(song.song_name)}</div>
+                        <div class="playlist-item-artist">${highlightSearchTerm(song.song_author)}</div>
                     </div>
                     <div class="playlist-item-duration">${formatTime(song.duration)}</div>
-                    ${!isAudioFile ? '<span style="color:#ff6b6b; font-size:0.8rem; margin-left:10px;">格式不支持</span>' : ''}
+                    ${!isAudioFile ? '<span class="unsupported-format">格式不支持</span>' : ''}
                 </div>
             `;
         });
@@ -146,10 +181,29 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.playlist-item').forEach(item => {
             item.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                loadSong(index);
-                playSong();
+                const listIndex = parseInt(this.getAttribute('data-list-index'));
+                
+                // 如果在搜索状态下，需要找到原始索引
+                if (searchQuery) {
+                    const song = filteredSongs[listIndex];
+                    if (song) {
+                        loadSong(song.index);
+                        playSong();
+                    }
+                } else {
+                    loadSong(index);
+                    playSong();
+                }
             });
         });
+    }
+    
+    // 高亮搜索词
+    function highlightSearchTerm(text) {
+        if (!searchQuery) return text;
+        
+        const regex = new RegExp(`(${searchQuery})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
     }
     
     // 初始化音频播放器
@@ -250,6 +304,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // 随机播放列表按钮
         elements.shufflePlaylistBtn.addEventListener('click', shufflePlaylist);
         
+        // 搜索功能
+        elements.searchInput.addEventListener('input', function() {
+            searchSongs(this.value);
+        });
+        
+        elements.clearSearchBtn.addEventListener('click', function() {
+            elements.searchInput.value = '';
+            searchSongs('');
+        });
+        
+        // 搜索框回车键
+        elements.searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && filteredSongs.length > 0) {
+                // 播放第一首搜索结果
+                const firstSong = filteredSongs[0];
+                loadSong(firstSong.index);
+                playSong();
+            }
+        });
+        
         // 窗口大小变化时调整UI
         window.addEventListener('resize', adjustUIForScreenSize);
     }
@@ -323,6 +397,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // 添加播放动画
                 document.querySelector('.cover-wrapper').classList.add('playing');
+                
+                // 更新播放列表中的播放状态
+                updatePlaylistHighlight();
             }).catch(error => {
                 console.error('播放失败:', error);
                 alert('播放失败，请检查音频文件格式或浏览器自动播放策略。');
@@ -431,8 +508,8 @@ document.addEventListener('DOMContentLoaded', function() {
             song.index = index;
         });
         
-        // 重新渲染播放列表
-        renderPlaylist();
+        // 重新搜索和渲染播放列表
+        searchSongs(searchQuery);
         
         // 如果当前播放的歌曲在列表中，找到它的新位置
         const currentSongId = songs.find(song => song.index === currentSongIndex)?.id;
@@ -485,7 +562,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         lyricsHTML += `
                             <div class="lyric-line" data-time="${timeInSeconds}">
-                                <span class="lyric-time">${formatTime(timeInSeconds)}</span>
                                 ${text}
                             </div>
                         `;
@@ -550,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const containerHeight = container.clientHeight;
                     
                     container.scrollTo({
-                        top: lineTop - containerHeight / 2,
+                        top: lineTop - containerHeight / 3,
                         behavior: 'smooth'
                     });
                 }
@@ -581,13 +657,17 @@ document.addEventListener('DOMContentLoaded', function() {
             item.classList.remove('active');
         });
         
-        const currentItem = document.querySelector(`.playlist-item[data-index="${currentSongIndex}"]`);
-        if (currentItem) {
-            currentItem.classList.add('active');
+        // 找到当前歌曲在播放列表中的位置
+        const listItem = Array.from(document.querySelectorAll('.playlist-item')).find(item => {
+            return parseInt(item.getAttribute('data-index')) === currentSongIndex;
+        });
+        
+        if (listItem) {
+            listItem.classList.add('active');
             
             // 滚动到当前歌曲位置
             const container = elements.playlist;
-            const itemTop = currentItem.offsetTop;
+            const itemTop = listItem.offsetTop;
             const containerHeight = container.clientHeight;
             
             container.scrollTo({
@@ -599,13 +679,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新播放列表中的歌曲时长
     function updatePlaylistDuration(index, duration) {
-        const playlistItem = document.querySelector(`.playlist-item[data-index="${index}"]`);
-        if (playlistItem) {
-            const durationElement = playlistItem.querySelector('.playlist-item-duration');
-            if (durationElement) {
-                durationElement.textContent = formatTime(duration);
+        songs[index].duration = duration;
+        
+        // 更新所有播放列表项中的时长显示
+        document.querySelectorAll('.playlist-item').forEach(item => {
+            if (parseInt(item.getAttribute('data-index')) === index) {
+                const durationElement = item.querySelector('.playlist-item-duration');
+                if (durationElement) {
+                    durationElement.textContent = formatTime(duration);
+                }
             }
-        }
+        });
     }
     
     // 格式化时间（秒 -> MM:SS）
@@ -662,19 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 根据屏幕大小调整UI
     function adjustUIForScreenSize() {
         // 这里可以添加响应式调整逻辑
-        // 例如在小屏幕上隐藏某些元素或调整布局
     }
-    
-    // 错误处理：图片加载失败
-    function handleImageError(img) {
-        img.src = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg';
-        img.alt = '默认专辑封面';
-    }
-    
-    // 全局错误处理
-    window.addEventListener('error', function(event) {
-        console.error('全局错误:', event.error);
-    });
     
     // 初始化应用
     initApp();
