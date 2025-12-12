@@ -714,6 +714,200 @@ footer {
     }
 }
 
+/* 播放列表搜索框 */
+.playlist-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+#search-input {
+    width: 100%;
+    padding: 10px 35px 10px 35px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: #6a11cb;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+}
+
+#search-input::placeholder {
+    color: #aaa;
+}
+
+#clear-search {
+    position: absolute;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: #888;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+#search-input:not(:placeholder-shown) + #clear-search {
+    opacity: 1;
+    visibility: visible;
+}
+
+#clear-search:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* 搜索结果提示 */
+.search-results {
+    padding: 5px 15px;
+    font-size: 0.9rem;
+    color: #888;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+}
+
+/* 歌词显示优化 */
+.lyric-line {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.lyric-line.active {
+    background: linear-gradient(90deg, rgba(106, 17, 203, 0.2), rgba(37, 117, 252, 0.2));
+    color: white;
+    font-weight: 600;
+    transform: scale(1.02);
+    border-left: 4px solid #6a11cb;
+}
+
+/* 移除歌词时间显示 */
+.lyric-time {
+    display: none !important;
+}
+
+/* 歌词容器高度限制 */
+.lyrics-display {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    line-height: 1.8;
+    font-size: 1.1rem;
+    max-height: 400px;
+    min-height: 300px;
+}
+
+/* 播放列表项优化 */
+.playlist-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid transparent;
+}
+
+.playlist-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.playlist-item.active {
+    background: rgba(106, 17, 203, 0.25);
+    border-left: 4px solid #6a11cb;
+}
+
+.playlist-item-playing {
+    position: relative;
+    margin-right: 10px;
+    display: none;
+}
+
+.playlist-item.active .playlist-item-playing {
+    display: block;
+}
+
+.playlist-item-playing i {
+    color: #6a11cb;
+    font-size: 0.9rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .playlist-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    .lyrics-display {
+        max-height: 300px;
+        min-height: 250px;
+    }
+    
+    .lyric-line {
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .lyrics-display {
+        max-height: 250px;
+        min-height: 200px;
+    }
+    
+    .lyric-line {
+        padding: 6px 10px;
+        font-size: 0.95rem;
+        min-height: 40px;
+    }
+}
+
 /* 搜索高亮 */
 .highlight {
     background-color: rgba(106, 17, 203, 0.3);
