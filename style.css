@@ -394,6 +394,11 @@ header h1 {
     padding-right: 10px;
     line-height: 1.8;
     font-size: 1.1rem;
+    max-height: 400px;
+    min-height: 300px;
+    scroll-behavior: smooth;
+    scroll-padding-top: 20px;
+    scroll-padding-bottom: 20px;
 }
 
 .lyrics-display::-webkit-scrollbar {
@@ -411,25 +416,50 @@ header h1 {
 }
 
 .lyric-line {
-    padding: 8px 12px;
+    padding: 10px 15px;
     margin: 5px 0;
     border-radius: 8px;
     transition: all 0.3s ease;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
 }
 
 .lyric-line.active {
-    background: rgba(106, 17, 203, 0.3);
+    background: linear-gradient(90deg, rgba(106, 17, 203, 0.25), rgba(37, 117, 252, 0.25));
     color: white;
     font-weight: 600;
     transform: scale(1.02);
+    border-left: 4px solid #6a11cb;
+    box-shadow: 0 4px 12px rgba(106, 17, 203, 0.2);
+    position: relative;
+    z-index: 1;
 }
 
-.lyric-time {
-    font-size: 0.85rem;
-    color: #6a11cb;
-    margin-right: 10px;
-    display: inline-block;
-    min-width: 55px;
+.lyric-line.active::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid #6a11cb;
+}
+
+.lyric-spacer {
+    height: 20px;
+    opacity: 0;
+}
+
+.lyric-line.large-gap {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .no-lyrics {
@@ -448,9 +478,82 @@ header h1 {
 
 .playlist-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 20px;
+}
+
+.playlist-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+#search-input {
+    width: 100%;
+    padding: 10px 35px 10px 35px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: #6a11cb;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+}
+
+#search-input::placeholder {
+    color: #aaa;
+}
+
+#clear-search {
+    position: absolute;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: #888;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+#search-input:not(:placeholder-shown) + #clear-search {
+    opacity: 1;
+    visibility: visible;
+}
+
+#clear-search:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .icon-btn {
@@ -496,12 +599,13 @@ header h1 {
 .playlist-item {
     display: flex;
     align-items: center;
-    padding: 15px;
+    padding: 12px 15px;
     border-radius: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid transparent;
 }
 
 .playlist-item:hover {
@@ -510,8 +614,30 @@ header h1 {
 }
 
 .playlist-item.active {
-    background: rgba(106, 17, 203, 0.3);
+    background: rgba(106, 17, 203, 0.25);
     border-left: 4px solid #6a11cb;
+}
+
+.playlist-item-playing {
+    position: relative;
+    margin-right: 10px;
+    display: none;
+}
+
+.playlist-item.active .playlist-item-playing {
+    display: block;
+}
+
+.playlist-item-playing i {
+    color: #6a11cb;
+    font-size: 0.9rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
 }
 
 .playlist-item img {
@@ -524,23 +650,32 @@ header h1 {
 
 .playlist-item-info {
     flex: 1;
+    min-width: 0;
 }
 
 .playlist-item-title {
     font-weight: 600;
     margin-bottom: 5px;
     color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .playlist-item-artist {
     font-size: 0.9rem;
     color: #b3b3b3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .playlist-item-duration {
     font-size: 0.9rem;
     color: #888;
     margin-left: 10px;
+    min-width: 45px;
+    text-align: right;
 }
 
 .playlist-empty {
@@ -553,6 +688,15 @@ header h1 {
     font-size: 3rem;
     margin-bottom: 15px;
     opacity: 0.5;
+}
+
+/* 搜索高亮 */
+.highlight {
+    background-color: rgba(106, 17, 203, 0.3);
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: 600;
 }
 
 /* 底部 */
@@ -658,9 +802,23 @@ footer {
         padding: 20px;
     }
     
-    .lyric-time {
-        display: block;
-        margin-bottom: 5px;
+    .lyrics-display {
+        max-height: 300px;
+        min-height: 250px;
+    }
+    
+    .lyric-line {
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+    
+    .playlist-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: 100%;
     }
 }
 
@@ -703,6 +861,11 @@ footer {
         font-size: 1.2rem;
     }
     
+    .lyrics-display {
+        max-height: 250px;
+        min-height: 200px;
+    }
+    
     .playlist-item {
         padding: 12px;
     }
@@ -712,233 +875,4 @@ footer {
         height: 40px;
         margin-right: 12px;
     }
-}
-
-/* 播放列表搜索框 */
-.playlist-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.search-box {
-    flex: 1;
-    min-width: 200px;
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.search-box i {
-    position: absolute;
-    left: 12px;
-    color: #888;
-    font-size: 0.9rem;
-}
-
-#search-input {
-    width: 100%;
-    padding: 10px 35px 10px 35px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    color: white;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-#search-input:focus {
-    outline: none;
-    border-color: #6a11cb;
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
-}
-
-#search-input::placeholder {
-    color: #aaa;
-}
-
-#clear-search {
-    position: absolute;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 50%;
-    color: #888;
-    font-size: 0.7rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-#search-input:not(:placeholder-shown) + #clear-search {
-    opacity: 1;
-    visibility: visible;
-}
-
-#clear-search:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-}
-
-/* 搜索结果提示 */
-.search-results {
-    padding: 5px 15px;
-    font-size: 0.9rem;
-    color: #888;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 10px;
-}
-
-/* 歌词显示优化 */
-.lyric-line {
-    padding: 10px 15px;
-    margin: 5px 0;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-}
-
-.lyric-line.active {
-    background: linear-gradient(90deg, rgba(106, 17, 203, 0.2), rgba(37, 117, 252, 0.2));
-    color: white;
-    font-weight: 600;
-    transform: scale(1.02);
-    border-left: 4px solid #6a11cb;
-}
-
-/* 移除歌词时间显示 */
-.lyric-time {
-    display: none !important;
-}
-
-/* 歌词容器高度限制 */
-.lyrics-display {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 10px;
-    line-height: 1.8;
-    font-size: 1.1rem;
-    max-height: 400px;
-    min-height: 300px;
-}
-
-/* 播放列表项优化 */
-.playlist-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.05);
-    border-left: 3px solid transparent;
-}
-
-.playlist-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateX(5px);
-}
-
-.playlist-item.active {
-    background: rgba(106, 17, 203, 0.25);
-    border-left: 4px solid #6a11cb;
-}
-
-.playlist-item-playing {
-    position: relative;
-    margin-right: 10px;
-    display: none;
-}
-
-.playlist-item.active .playlist-item-playing {
-    display: block;
-}
-
-.playlist-item-playing i {
-    color: #6a11cb;
-    font-size: 0.9rem;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .playlist-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .search-box {
-        min-width: 100%;
-    }
-    
-    .lyrics-display {
-        max-height: 300px;
-        min-height: 250px;
-    }
-    
-    .lyric-line {
-        padding: 8px 12px;
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .lyrics-display {
-        max-height: 250px;
-        min-height: 200px;
-    }
-    
-    .lyric-line {
-        padding: 6px 10px;
-        font-size: 0.95rem;
-        min-height: 40px;
-    }
-}
-
-/* 搜索高亮 */
-.highlight {
-    background-color: rgba(106, 17, 203, 0.3);
-    color: #fff;
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-weight: 600;
-}
-
-/* 不支持的格式提示 */
-.unsupported-format {
-    color: #ff6b6b;
-    font-size: 0.8rem;
-    margin-left: 10px;
-    padding: 2px 6px;
-    background: rgba(255, 107, 107, 0.1);
-    border-radius: 4px;
-}
-
-/* 歌词滚动条优化 */
-.lyrics-display::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(90deg, #2575fc 0%, #6a11cb 100%);
-}
-
-/* 播放列表项播放图标动画 */
-@keyframes pulse {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.5; }
-}
-
-.playlist-item.active .playlist-item-playing i {
-    animation: pulse 1.5s infinite;
 }
