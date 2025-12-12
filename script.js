@@ -135,6 +135,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 渲染播放列表
     function renderPlaylist() {
+        if (!elements.playlist) {
+            console.error('播放列表容器未找到');
+            return;
+        }
+        
         if (filteredSongs.length === 0) {
             elements.playlist.innerHTML = `
                 <div class="playlist-empty">
@@ -149,48 +154,52 @@ document.addEventListener('DOMContentLoaded', function() {
         let playlistHTML = '';
         
         filteredSongs.forEach((song, listIndex) => {
-        // 获取原始索引
-        const originalIndex = song.index;
-        const isActive = originalIndex === currentSongIndex;
-        
-        // 获取歌曲文件扩展名（支持大小写）
-        const fileExt = song.song_file ? song.song_file.split('.').pop().toLowerCase() : '';
-        const supportedFormats = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
-        const isAudioFile = supportedFormats.includes(fileExt);
-        
-        // 检查具体是什么格式（用于显示）
-        const originalExt = song.song_file ? song.song_file.split('.').pop() : '';
-        const isMp3 = fileExt === 'mp3';
-        const isWav = fileExt === 'wav';
-        const isMp3UpperCase = originalExt === 'MP3';
-        const isWavUpperCase = originalExt === 'WAV';
-        
-        // 格式提示文本
-        let formatHint = '';
-        if (!isAudioFile && song.song_file) {
-            formatHint = '<span class="unsupported-format">格式不支持</span>';
-        } else if (isMp3UpperCase || isWavUpperCase) {
-            // 如果是大写的MP3或WAV，显示提示
-            formatHint = `<span class="uppercase-format">${originalExt}</span>`;
-        }
-        
-        playlistHTML += `
-            <div class="playlist-item ${isActive ? 'active' : ''}" data-index="${originalIndex}" data-list-index="${listIndex}">
-                <div class="playlist-item-playing">
-                    <i class="fas fa-play"></i>
+            const originalIndex = song.index;
+            const isActive = originalIndex === currentSongIndex;
+            
+            // 获取歌曲信息，使用默认值避免undefined
+            const songName = song.song_name || '未知歌曲';
+            const songAuthor = song.song_author || '未知歌手';
+            const coverPath = song.cover_file ? 'covers/' + song.cover_file : 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg';
+            
+            playlistHTML += `
+                <div class="playlist-item ${isActive ? 'active' : ''}" data-index="${originalIndex}" data-list-index="${listIndex}">
+                    <div class="playlist-item-playing">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <img src="${coverPath}" 
+                         alt="${songName}" 
+                         onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'">
+                    <div class="playlist-item-info">
+                        <div class="playlist-item-title">${highlightSearchTerm(songName)}</div>
+                        <div class="playlist-item-artist">${highlightSearchTerm(songAuthor)}</div>
+                    </div>
+                    <div class="playlist-item-duration">${formatTime(song.duration)}</div>
                 </div>
-                <img src="${song.cover_file ? 'covers/' + song.cover_file : 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'}" 
-                     alt="${song.song_name || '未知歌曲'}" 
-                     onerror="this.src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg'">
-                <div class="playlist-item-info">
-                    <div class="playlist-item-title">${highlightSearchTerm(song.song_name || '未知歌曲')}</div>
-                    <div class="playlist-item-artist">${highlightSearchTerm(song.song_author || '未知歌手')}</div>
-                </div>
-                <div class="playlist-item-duration">${formatTime(song.duration)}</div>
-                ${formatHint}
-            </div>
-        `;
-    });
+            `;
+        });
+        
+        elements.playlist.innerHTML = playlistHTML;
+        
+        // 为每个播放列表项添加点击事件
+        document.querySelectorAll('.playlist-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                const listIndex = parseInt(this.getAttribute('data-list-index'));
+                
+                if (searchQuery) {
+                    const song = filteredSongs[listIndex];
+                    if (song) {
+                        loadSong(song.index);
+                        playSong();
+                    }
+                } else {
+                    loadSong(index);
+                    playSong();
+                }
+            });
+        });
+    }
         
         elements.playlist.innerHTML = playlistHTML;
         
