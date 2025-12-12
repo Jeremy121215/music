@@ -1,0 +1,23 @@
+{
+  "songs": [
+    {
+      "id": 1,
+      "song_name": "歌曲名称1",
+      "song_author": "歌手名称1",
+      "song_file": "song1.mp3",
+      "cover_file": "cover1.jpg",
+      "has_scroll_lyric": true,
+      "song_lyric": "[00:01.123]第一行歌词...\n[00:05.456]第二行歌词..."
+    },
+    {
+      "id": 2,
+      "song_name": "歌曲名称2",
+      "song_author": "歌手名称2",
+      "song_file": "song2.wav",
+      "cover_file": "cover2.png",
+      "has_scroll_lyric": false,
+      "song_lyric": "普通歌词格式，没有时间戳..."
+    }
+    // 更多歌曲...
+  ]
+}
