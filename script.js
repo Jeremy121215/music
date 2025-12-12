@@ -669,28 +669,102 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 更新播放列表高亮
-    function updatePlaylistHighlight() {
-        document.querySelectorAll('.playlist-item').forEach(item => {
-            item.classList.remove('active');
-        });
+    // 更新歌词高亮
+    function updateLyricsHighlight() {
+        const currentTime = audioPlayer.currentTime;
+        const lyricLines = document.querySelectorAll('.lyric-line');
         
-        // 找到当前歌曲在播放列表中的位置
-        const listItem = Array.from(document.querySelectorAll('.playlist-item')).find(item => {
-            return parseInt(item.getAttribute('data-index')) === currentSongIndex;
-        });
+        // 如果没有歌词，直接返回
+        if (lyricLines.length === 0) return;
         
-        if (listItem) {
-            listItem.classList.add('active');
+        // 移除所有高亮
+        lyricLines.forEach(line => line.classList.remove('active'));
+        
+        const song = songs[currentSongIndex];
+        if (!song || !song.has_scroll_lyric || scrollLyrics.length === 0) {
+            return;
+        }
+        
+        // 找到当前时间对应的歌词索引
+        let activeIndex = -1;
+        for (let i = scrollLyrics.length - 1; i >= 0; i--) {
+            if (currentTime >= scrollLyrics[i].time) {
+                activeIndex = i;
+                break;
+            }
+        }
+        
+        // 如果没有找到合适的歌词行，返回
+        if (activeIndex < 0) {
+            // 可能歌词还没开始，高亮第一行
+            const firstLine = lyricLines[0];
+            if (firstLine && currentTime < 1) {
+                firstLine.classList.add('active');
+            }
+            return;
+        }
+        
+        // 高亮当前歌词行
+        const activeLine = lyricLines[activeIndex];
+        if (!activeLine) return;
+        
+        activeLine.classList.add('active');
+        
+        // 获取歌词容器和当前行位置
+        const container = elements.lyricsDisplay;
+        if (!container) return;
+        
+        const lineTop = activeLine.offsetTop;
+        const lineHeight = activeLine.offsetHeight;
+        const containerHeight = container.clientHeight;
+        const containerScrollTop = container.scrollTop;
+        
+        // 计算当前行在容器中的位置
+        const lineBottom = lineTop + lineHeight;
+        const viewportTop = containerScrollTop;
+        const viewportBottom = containerScrollTop + containerHeight;
+        
+        // 检查当前行是否在可视区域内
+        const isInView = (lineTop >= viewportTop && lineTop <= viewportBottom) || 
+                         (lineBottom >= viewportTop && lineBottom <= viewportBottom);
+        
+        // 只有当歌词行不在可视区域内时才滚动
+        if (!isInView) {
+            // 计算滚动位置：让当前行显示在容器中间偏上的位置（1/4处）
+            // 这样可以看到当前行和接下来几行歌词
+            const targetScrollTop = lineTop - (containerHeight / 4);
             
-            // 滚动到当前歌曲位置
-            const container = elements.playlist;
-            const itemTop = listItem.offsetTop;
-            const containerHeight = container.clientHeight;
+            // 限制滚动范围
+            const maxScrollTop = container.scrollHeight - containerHeight;
+            const safeScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
             
+            // 使用平滑滚动
             container.scrollTo({
-                top: itemTop - containerHeight / 3,
+                top: safeScrollTop,
                 behavior: 'smooth'
             });
+        }
+        
+        // 同时，确保上一行歌词也适当显示（提供上下文）
+        // 这样可以避免当前行被滚动到太靠上的位置
+        if (activeIndex > 0) {
+            const prevLine = lyricLines[activeIndex - 1];
+            if (prevLine) {
+                const prevLineTop = prevLine.offsetTop;
+                const prevLineInView = prevLineTop >= viewportTop && prevLineTop <= viewportBottom;
+                
+                // 如果上一行不在可视区域，可能需要向上滚动一点以显示上下文
+                if (!prevLineInView && (lineTop - prevLineTop) > containerHeight / 2) {
+                    // 向上滚动一点，让上一行也可见
+                    const contextScrollTop = prevLineTop - (containerHeight / 6);
+                    const safeContextScrollTop = Math.max(0, Math.min(contextScrollTop, maxScrollTop));
+                    
+                    container.scrollTo({
+                        top: safeContextScrollTop,
+                        behavior: 'smooth'
+                    });
+                }
+            }
         }
     }
     
