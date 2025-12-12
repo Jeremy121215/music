@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>音乐播放器 - 享受美好音乐时光</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/music.svg">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header>
+            <h1><i class="fas fa-music"></i> 音乐播放器</h1>
+            <div class="play-mode">
+                <button id="order-mode" class="mode-btn active" title="顺序播放">
+                    <i class="fas fa-list-ol"></i>
+                </button>
+                <button id="random-mode" class="mode-btn" title="随机播放">
+                    <i class="fas fa-random"></i>
+                </button>
+                <button id="single-mode" class="mode-btn" title="单曲循环">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- 左侧：播放器控制区域 -->
+            <div class="player-section">
+                <!-- 专辑封面 -->
+                <div class="cover-container">
+                    <div class="cover-wrapper">
+                        <img id="cover-image" src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/compact-disc.svg" alt="专辑封面">
+                        <div class="cover-overlay">
+                            <div class="playing-indicator">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="song-info">
+                        <h2 id="song-title">歌曲标题</h2>
+                        <p id="song-artist">歌手名称</p>
+                    </div>
+                </div>
+
+                <!-- 播放控制 -->
+                <div class="player-controls">
+                    <div class="progress-container">
+                        <span id="current-time">0:00</span>
+                        <div class="progress-bar">
+                            <div class="progress" id="song-progress"></div>
+                            <div class="progress-thumb" id="progress-thumb"></div>
+                        </div>
+                        <span id="duration">0:00</span>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button id="prev-btn" class="control-btn" title="上一首">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="play-btn" class="control-btn play" title="播放">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button id="next-btn" class="control-btn" title="下一首">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                        <div class="volume-container">
+                            <button id="volume-btn" class="control-btn" title="音量">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <div class="volume-slider-container">
+                                <div class="volume-slider">
+                                    <div class="volume-level" id="volume-level"></div>
+                                    <div class="volume-thumb" id="volume-thumb"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：播放列表和歌词区域 -->
+            <div class="playlist-section">
+                <!-- 歌词显示 -->
+                <div class="lyrics-container">
+                    <h3><i class="fas fa-scroll"></i> 歌词</h3>
+                    <div class="lyrics-display" id="lyrics-display">
+                        <div class="no-lyrics">当前歌曲没有歌词或歌词未加载</div>
+                    </div>
+                </div>
+
+                <!-- 播放列表 -->
+                <div class="playlist-container">
+                    <div class="playlist-header">
+                        <h3><i class="fas fa-list"></i> 播放列表 <span id="song-count">(0 首)</span></h3>
+                        <button id="shuffle-playlist" class="icon-btn" title="随机播放列表">
+                            <i class="fas fa-random"></i>
+                        </button>
+                    </div>
+                    <div class="playlist" id="playlist">
+                        <div class="playlist-empty">
+                            <i class="fas fa-music"></i>
+                            <p>播放列表为空</p>
+                            <p>正在加载歌曲...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <footer>
+            <p>音乐播放器 &copy; 2023 | 当前播放模式: <span id="current-mode">顺序播放</span></p>
+        </footer>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>加载音乐库...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
